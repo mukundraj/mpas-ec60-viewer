@@ -53,6 +53,44 @@
 		<script src="src/utils/picking.js"></script>
 		<script type='text/javascript' src=../js/three.js-master/examples/js/libs/dat.gui.min.js></script>
 		<script src="https://d3js.org/d3.v5.min.js"></script>
+		<script type="x-shader/x-vertex" id="vertexshader">
+
+			attribute float size;
+			attribute vec3 customColor;
+
+			varying vec3 vColor;
+
+			void main() {
+
+			vColor = customColor;
+
+			vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+
+			gl_PointSize = size * ( 300.0 / -mvPosition.z );
+
+			gl_Position = projectionMatrix * mvPosition;
+
+			}
+
+		</script>
+
+			<script type="x-shader/x-fragment" id="fragmentshader">
+				uniform vec3 color;
+				uniform sampler2D pointTexture;
+
+				varying vec3 vColor;
+
+				void main() {
+
+				gl_FragColor = vec4( color * vColor, 1.0 );
+
+				gl_FragColor = gl_FragColor * texture2D( pointTexture, gl_PointCoord );
+
+				if ( gl_FragColor.a < ALPHATEST ) discard;
+
+			}
+
+		</script>
 
 		<script type="module">
 
@@ -60,17 +98,20 @@
 			import { TrackballControls } from '../js/three.js-master/examples/jsm/controls/TrackballControls.js';
 
 
-
+			var particles;
+			var PARTICLE_SIZE = 12;
+			var raycaster, intersects;
+			var mouse, INTERSECTED;
 
 
 			var params = {
-				orthographicCamera: true
+				orthographicCamera: false
 			};
 		
 			var frustumSize = 400;
 			var aspect = window.innerWidth / window.innerHeight;
 			var perspectiveCamera, orthographicCamera, controls;
-			perspectiveCamera = new THREE.PerspectiveCamera( 60, aspect, 1, 1000 );
+			perspectiveCamera = new THREE.PerspectiveCamera( 45, aspect, 1, 1000 );
 			perspectiveCamera.position.z = 100;
 
 			orthographicCamera = new THREE.OrthographicCamera( frustumSize * aspect / - 2, frustumSize * aspect / 2, frustumSize / 2, frustumSize / - 2, 1, 1000 );
@@ -95,7 +136,7 @@
 			// var cube = new THREE.Mesh( geometry, material );
 			// scene.add( cube );
 
-			camera.position.z = 5;
+			// camera.position.z = -10000;
 
 			createControls( params.orthographicCamera ? orthographicCamera : perspectiveCamera );
 
@@ -106,14 +147,51 @@
 			let curves_l = [];
 			let curves_r = [];
 
-
-
+			var particles;
+			let div_factor = 200;
+			let radius = 6371229./div_factor;
 			var animate = function () {
+
+
 				requestAnimationFrame( animate );
 
 
 				controls.update();
 				var camera = ( params.orthographicCamera ) ? orthographicCamera : perspectiveCamera;
+
+
+				// picker start
+				
+				var geometry = particles.geometry;
+				var attributes = geometry.attributes;
+
+				raycaster.setFromCamera( mouse, camera );
+
+				intersects = raycaster.intersectObject( particles );
+
+				if ( intersects.length > 0 ) {
+
+					if ( INTERSECTED != intersects[ 0 ].index ) {
+
+						attributes.size.array[ INTERSECTED ] = PARTICLE_SIZE;
+
+						INTERSECTED = intersects[ 0 ].index;
+
+						attributes.size.array[ INTERSECTED ] = PARTICLE_SIZE * 2;
+						attributes.size.needsUpdate = true;
+
+					}
+
+				} else if ( INTERSECTED !== null ) {
+
+					attributes.size.array[ INTERSECTED ] = PARTICLE_SIZE;
+					attributes.size.needsUpdate = true;
+					INTERSECTED = null;
+
+				}
+
+
+				// picker end
 
 				renderer.render( scene, camera );
 
@@ -121,7 +199,7 @@
 
 			};
 
-			animate();
+			// animate();
 
 			var loader = new THREE.FileLoader();
 
@@ -153,24 +231,80 @@
 						
 					});
 
+					let num_verts = items.length
+					var positions = new Float32Array( num_verts*3 );
+					var colors = new Float32Array( num_verts*3);
+					var sizes = new Float32Array( num_verts );
+
 					console.log(items[0])
-					let radius = 6371229.;
-					for (let i=0; i<2000; i++){
 
-							var dotGeometry = new THREE.Geometry();
-							dotGeometry.vertices.push(new THREE.Vector3( items[i][0]/radius, items[i][1]/radius, items[i][2]/radius));
-							var dotMaterial = new THREE.PointsMaterial( { size: 1, sizeAttenuation: false } );
-							var dot = new THREE.Points( dotGeometry, dotMaterial );
-							scene.add( dot );
+					
+					
+					for (let i=0; i<num_verts; i++){
+
+							// var dotGeometry = new THREE.Geometry();
+							// dotGeometry.vertices.push(new THREE.Vector3( items[i][0]/radius, items[i][1]/radius, items[i][2]/radius));
+							// var dotMaterial = new THREE.PointsMaterial( { size: 1, sizeAttenuation: false } );
+							// var dot = new THREE.Points( dotGeometry, dotMaterial );
+							// scene.add( dot );
 
 
+							positions[i*3] = items[i][0]/radius;
+							positions[i*3+1] = items[i][1]/radius;
+							positions[i*3+2] = items[i][2]/radius;
+							colors[i] = 255;
+							colors[i+1] = 0;
+							colors[i+2] = 0;
+							sizes[ i ] = PARTICLE_SIZE * 0.5;
 
 					}
 
-					var geometry = new THREE.SphereGeometry( 0.99, 100, 100 );
+					var geometry = new THREE.BufferGeometry();
+					geometry.setAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
+					geometry.setAttribute( 'customColor', new THREE.BufferAttribute( colors, 3 ) );
+					geometry.setAttribute( 'size', new THREE.BufferAttribute( sizes, 1 ) );
+
+					var material = new THREE.ShaderMaterial( {
+
+						uniforms: {
+							color: { value: new THREE.Color( 0xffffff ) },
+							pointTexture: { value: new THREE.TextureLoader().load( "textures/sprites/disc.png" ) }
+						},
+						vertexShader: document.getElementById( 'vertexshader' ).textContent,
+						fragmentShader: document.getElementById( 'fragmentshader' ).textContent,
+
+						alphaTest: 0.9
+
+					} );
+
+					//
+
+					particles = new THREE.Points( geometry, material );
+					scene.add( particles );
+
+					raycaster = new THREE.Raycaster();
+					mouse = new THREE.Vector2();
+
+					document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+
+
+					var geometry = new THREE.SphereGeometry( div_factor - 0.02*div_factor, 100, 100 );
 					var material = new THREE.MeshBasicMaterial( {color: 0x111111} );
 					var sphere = new THREE.Mesh( geometry, material );
 					scene.add( sphere );
+
+
+					animate();
+
+					
+
+
+
+
+
+
+
+
 					
 
 					// for (let i=0; i<items.length; i++){
@@ -249,6 +383,17 @@
 				controls.keys = [ 65, 83, 68 ];
 
 			}
+
+			function onDocumentMouseMove( event ) {
+
+				event.preventDefault();
+
+				mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+				mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+
+
+			}
+
 
 			function onWindowResize() {
 
