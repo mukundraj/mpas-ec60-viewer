@@ -151,12 +151,13 @@
 			let curves_l = [];
 			let curves_r = [];
 
-			var pars = {particles:0, raycaster:0, mouse:0};
+			let div_factor = 200;
+			var pars = {particles:0, raycaster:0, mouse:0, radius:6371229./div_factor, 
+						div_factor:div_factor, scene: scene, PARTICLE_SIZE: PARTICLE_SIZE};
 			pars.raycaster = new THREE.Raycaster();
 			pars.mouse = new THREE.Vector2();
 
-			let div_factor = 200;
-			let radius = 6371229./div_factor;
+			let radius = pars.radius;
 			var animate = function () {
 
 
@@ -213,14 +214,27 @@
 			THREE.Cache.enabled = true;
 			//load a text file and output the result to the 
 
-			console.log(pars)
 
-			function load_draw_all(ipfile, radius, PARTICLE_SIZE, scene, div_factor, pars){
-			loader.load(ipfile, function ( data) {
+			let ipfile_verts = '../../viewer_mpas_convertor/output/vertices.csv';
+			let ipfile_lines = '../../viewer_mpas_convertor/output/edgeids.csv';
+			let ipfile_centers = '../../viewer_mpas_convertor/output/centers.csv';
 
-					draw_points(data, radius, PARTICLE_SIZE, scene, div_factor, pars);
+			function load_draw_all(radius, PARTICLE_SIZE, scene, div_factor, pars){
+			loader.load(ipfile_verts, function ( data_verts) {
+					let items_verts = draw_points(data_verts, radius, PARTICLE_SIZE, scene, div_factor, pars, 0); // 0 param implies no render
 
-					animate();
+					loader.load(ipfile_lines, function ( data_lines) {
+
+						draw_lines(data_lines, pars, items_verts);
+
+						loader.load(ipfile_centers, function ( data_centers) {
+							draw_points(data_centers, radius, PARTICLE_SIZE, scene, div_factor, pars, 1);
+
+							animate();
+						});
+
+						
+					});
 
 
 					// for (let i=0; i<items.length; i++){
@@ -283,8 +297,8 @@
 			);
 		}
 
-		// plot_centers('../../viewer_mpas_convertor/output/centers.csv');
-		load_draw_all('../../viewer_mpas_convertor/output/vertices.csv', radius, PARTICLE_SIZE, scene, div_factor, pars);
+		
+		load_draw_all(radius, PARTICLE_SIZE, scene, div_factor, pars);
 
 
 
