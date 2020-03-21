@@ -102,6 +102,8 @@
 			var PARTICLE_SIZE = 6;
 			var raycaster, intersects;
 			var mouse, INTERSECTED;
+			var mouseDown = 0;
+
 
 
 			var params = {
@@ -167,27 +169,30 @@
 
 				raycaster.setFromCamera( mouse, camera );
 
-				intersects = raycaster.intersectObject( particles );
+				if(mouseDown){
 
-				if ( intersects.length > 0 ) {
+					intersects = raycaster.intersectObject( particles );
 
-					if ( INTERSECTED != intersects[ 0 ].index ) {
+					if ( intersects.length > 0 ) {
+
+						if ( INTERSECTED != intersects[ 0 ].index ) {
+
+							attributes.size.array[ INTERSECTED ] = PARTICLE_SIZE;
+
+							INTERSECTED = intersects[ 0 ].index;
+
+							attributes.size.array[ INTERSECTED ] = PARTICLE_SIZE * 1.1;
+							attributes.size.needsUpdate = true;
+
+						}
+
+					} else if ( INTERSECTED !== null ) {
 
 						attributes.size.array[ INTERSECTED ] = PARTICLE_SIZE;
-
-						INTERSECTED = intersects[ 0 ].index;
-
-						attributes.size.array[ INTERSECTED ] = PARTICLE_SIZE * 1.1;
 						attributes.size.needsUpdate = true;
+						INTERSECTED = null;
 
 					}
-
-				} else if ( INTERSECTED !== null ) {
-
-					attributes.size.array[ INTERSECTED ] = PARTICLE_SIZE;
-					attributes.size.needsUpdate = true;
-					INTERSECTED = null;
-
 				}
 
 
@@ -397,6 +402,14 @@
 				mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
 
 
+			}
+
+			canvas.onmousedown = function() { 
+			  ++mouseDown;
+			  console.log("sdfs")
+			}
+			canvas.onmouseup = function() {
+			  --mouseDown;
 			}
 
 
