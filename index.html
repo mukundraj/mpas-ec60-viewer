@@ -1,0 +1,276 @@
+<html>
+	<head>
+		<title>Segments viewer</title>
+		<style>
+			 body {
+        margin: 0;
+    }
+    #c {
+        width: 100%;  /* let our container decide our size */
+        height: 100%;
+        display: block;
+    }
+    #container {
+      position: relative;  /* makes this the origin of its children */
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+    #labels {
+      position: absolute;  /* let us position ourself inside the container */
+      left: 0;             /* make our position the top left of the container */
+      top: 0;
+      color: white;
+    }
+    #labels>div {
+      position: absolute;  /* let us position them inside the container */
+      left: 0;             /* make their default position the top left of the container */
+      top: 0;
+      cursor: pointer;     /* change the cursor to a hand when over us */
+      font-size: large;
+      user-select: none;   /* don't let the text get selected */
+      text-shadow:         /* create a black outline */
+        -1px -1px 0 #000,
+         0   -1px 0 #000,
+         1px -1px 0 #000,
+         1px  0   0 #000,
+         1px  1px 0 #000,
+         0    1px 0 #000,
+        -1px  1px 0 #000,
+        -1px  0   0 #000;
+    }
+    #labels>div:hover {
+      color: red;
+    }
+		</style>
+	</head>
+	<body>
+		<div id="container">
+			<canvas id="c"></canvas>
+			<div id="labels"></div>
+		</div>
+		<script src="../js/three.js"></script>
+		<script src="src/utils/picking.js"></script>
+		<script type='text/javascript' src=../js/three.js-master/examples/js/libs/dat.gui.min.js></script>
+		<script src="https://d3js.org/d3.v5.min.js"></script>
+
+		<script type="module">
+
+
+			import { TrackballControls } from '../js/three.js-master/examples/jsm/controls/TrackballControls.js';
+
+
+
+
+
+			var params = {
+				orthographicCamera: true
+			};
+		
+			var frustumSize = 400;
+			var aspect = window.innerWidth / window.innerHeight;
+			var perspectiveCamera, orthographicCamera, controls;
+			perspectiveCamera = new THREE.PerspectiveCamera( 60, aspect, 1, 1000 );
+			perspectiveCamera.position.z = 100;
+
+			orthographicCamera = new THREE.OrthographicCamera( frustumSize * aspect / - 2, frustumSize * aspect / 2, frustumSize / 2, frustumSize / - 2, 1, 1000 );
+			orthographicCamera.position.z = 100;
+
+
+			// controls.dispose();
+
+			
+
+			var scene = new THREE.Scene();
+			var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
+			const canvas = document.querySelector('#c');
+			var renderer = new THREE.WebGLRenderer({canvas});
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			// document.body.appendChild( renderer.domElement );
+
+
+
+			// var geometry = new THREE.BoxGeometry();
+			// var material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
+			// var cube = new THREE.Mesh( geometry, material );
+			// scene.add( cube );
+
+			camera.position.z = 5;
+
+			createControls( params.orthographicCamera ? orthographicCamera : perspectiveCamera );
+
+			// for labels
+			// const elem = document.createElement('div');
+			let labels_l = [];
+			let labels_r = [];
+			let curves_l = [];
+			let curves_r = [];
+
+
+
+			var animate = function () {
+				requestAnimationFrame( animate );
+
+
+				controls.update();
+				var camera = ( params.orthographicCamera ) ? orthographicCamera : perspectiveCamera;
+
+				renderer.render( scene, camera );
+
+
+
+			};
+
+			animate();
+
+			var loader = new THREE.FileLoader();
+
+
+			THREE.Cache.enabled = true;
+			//load a text file and output the result to the console
+
+			function plot_centers(ipfile){
+			loader.load(
+				// resource URL
+				ipfile,
+				// onLoad callback
+				function ( data ) {
+
+
+				
+					
+					var items = data.split("\n").map(function(el){ return el.split(" ");});
+					items = items.filter(item => item.length > 1);
+
+					items = items.map(function(elem) {
+
+						// console.log(elem);
+						elem = elem.filter(e => e.localeCompare("")!=0);
+
+						return elem.map(function(elem2) {
+							return parseFloat(elem2);
+						});
+						
+					});
+
+					console.log(items[0])
+					let radius = 6371229.;
+					for (let i=0; i<2000; i++){
+
+							var dotGeometry = new THREE.Geometry();
+							dotGeometry.vertices.push(new THREE.Vector3( items[i][0]/radius, items[i][1]/radius, items[i][2]/radius));
+							var dotMaterial = new THREE.PointsMaterial( { size: 1, sizeAttenuation: false } );
+							var dot = new THREE.Points( dotGeometry, dotMaterial );
+							scene.add( dot );
+
+
+
+					}
+
+					var geometry = new THREE.SphereGeometry( 0.99, 100, 100 );
+					var material = new THREE.MeshBasicMaterial( {color: 0x111111} );
+					var sphere = new THREE.Mesh( geometry, material );
+					scene.add( sphere );
+					
+
+					// for (let i=0; i<items.length; i++){
+					// 	const geometry = new THREE.BufferGeometry();
+					// 	var points = new Float32Array(items[i].length);
+					// 	const colors = new Float32Array(items[i].length);
+					// 	for (let j=0; j<items[i].length; j+=3){
+					// 		// points.push( new THREE.Vector3( items[i][j]/512, items[i][j+1]/512, items[i][j+2]/512 ) );
+					// 		points[j] = items[i][j]/512;
+					// 		points[j+1] = items[i][j+1]/512;
+					// 		points[j+2] = items[i][j+2]/512;
+					// 		colors[j] = d3.color(d3.interpolateRdBu(j/3072)).r/255;
+					// 		colors[j+1] = d3.color(d3.interpolateRdBu(j/3072)).g/255;
+					// 		colors[j+2] = d3.color(d3.interpolateRdBu(j/3072)).b/255;
+					// 	}
+					// 	// console.log(len(items[i]/3));
+					// 	// var geometry = new THREE.BufferGeometry().setFromPoints( points );
+					// 	geometry.setAttribute('position', new THREE.BufferAttribute(points, 3));
+					// 	geometry.setAttribute('color', new THREE.BufferAttribute(colors,3));
+					// 	// var material= new THREE.LineBasicMaterial( { 
+					// 	// 	vertexColors: THREE.VertexColors  } );
+					// 	var material= new THREE.LineBasicMaterial( { 
+					// 		vertexColors: THREE.VertexColors  } );
+					// 	var line = new THREE.Line( geometry, material );
+					// 	scene.add( line );
+
+					// }
+					// var points = [];
+					// points.push(new THREE.Vector3( 0, 0, 0));
+					// points.push(new THREE.Vector3( 0, 0, 1));
+					// points.push(new THREE.Vector3( 0, 1, 1));
+					// points.push(new THREE.Vector3( 0, 1, 0));
+					// points.push(new THREE.Vector3( 0, 0, 0));
+					// points.push(new THREE.Vector3( 1, 0, 0));
+					// points.push(new THREE.Vector3( 1, 1, 0));
+					// points.push(new THREE.Vector3( 1, 1, 1));
+					// points.push(new THREE.Vector3( 1, 0, 1));
+					// points.push(new THREE.Vector3( 0, 0, 1));
+					// points.push(new THREE.Vector3( 0, 0, 0));
+					// points.push(new THREE.Vector3( 1, 0, 0));
+					// points.push(new THREE.Vector3( 1, 0, 1));
+					// var material_boundary = new THREE.MeshBasicMaterial( { color: 0xff0000 } );
+					
+					// var geometry1 = new THREE.BufferGeometry().setFromPoints( points );
+					// var line = new THREE.Line( geometry1, material_boundary );
+					// scene.add(line);
+
+
+				},
+
+				// onProgress callback
+				function ( xhr ) {
+					console.log( (xhr.loaded / xhr.total * 100) + '% loaded' );
+				},
+
+				// onError callback
+				function ( err ) {
+					console.error( 'An error happened' );
+				}
+			);
+		}
+
+		plot_centers('../../viewer_mpas_convertor/output/centers.csv');
+		
+
+
+
+			function createControls( camera ) {
+
+				controls = new TrackballControls( camera, renderer.domElement );
+
+				controls.rotateSpeed = 1.0;
+				controls.zoomSpeed = 1.2;
+				controls.panSpeed = 2.0;
+
+				controls.keys = [ 65, 83, 68 ];
+
+			}
+
+			function onWindowResize() {
+
+				var aspect = window.innerWidth / window.innerHeight;
+
+				perspectiveCamera.aspect = aspect;
+				perspectiveCamera.updateProjectionMatrix();
+
+				orthographicCamera.left = - frustumSize * aspect / 2;
+				orthographicCamera.right = frustumSize * aspect / 2;
+				orthographicCamera.top = frustumSize / 2;
+				orthographicCamera.bottom = - frustumSize / 2;
+				orthographicCamera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+				controls.handleResize();
+
+			}
+
+		</script>
+	</body>
+</html>
+
+<!-- https://stackoverflow.com/questions/42609602/how-to-hide-and-show-an-object-on-scene-in-three-js -->
