@@ -102,7 +102,8 @@
 			var PARTICLE_SIZE = 6;
 			var raycaster, intersects;
 			var mouse, INTERSECTED;
-			var mouseDown = 0;
+			var selectButtonPressed = 0;
+			let mouseDown = 0;
 
 
 
@@ -169,7 +170,7 @@
 
 				raycaster.setFromCamera( mouse, camera );
 
-				if(mouseDown){
+				if(selectButtonPressed && mouseDown){
 
 					intersects = raycaster.intersectObject( particles );
 
@@ -404,6 +405,21 @@
 
 			}
 
+			document.onkeypress = function(evt) {
+			    evt = evt || window.event;
+			    var charCode = evt.keyCode || evt.which;
+			    // console.log(charCode)
+			    if (charCode === 115)
+			    	selectButtonPressed = 1;
+			    // var charStr = String.fromCharCode(charCode);
+			    // alert(charStr);
+			};
+
+			document.onkeyup = function(evt) {
+			    evt = evt || window.event;
+			    selectButtonPressed = 0;
+			};
+
 			canvas.onmousedown = function() { 
 			  ++mouseDown;
 			  console.log("sdfs")
@@ -411,6 +427,7 @@
 			canvas.onmouseup = function() {
 			  --mouseDown;
 			}
+
 
 
 			function onWindowResize() {
