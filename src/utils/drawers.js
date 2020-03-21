@@ -72,6 +72,8 @@ function draw_points(data, radius, PARTICLE_SIZE, scene, div_factor, pars, draw)
 						
 					});
 
+					pars.items = items;
+
 					if (draw===1){
 
 						let num_verts = items.length
@@ -82,8 +84,9 @@ function draw_points(data, radius, PARTICLE_SIZE, scene, div_factor, pars, draw)
 
 
 						var color = new THREE.Color();
+						let count = 0;
 						
-						for (let i=0; i<num_verts; i++){
+						for (let i=0; i<num_verts; i+=1){
 
 								// var dotGeometry = new THREE.Geometry();
 								// dotGeometry.vertices.push(new THREE.Vector3( items[i][0]/radius, items[i][1]/radius, items[i][2]/radius));
@@ -95,8 +98,13 @@ function draw_points(data, radius, PARTICLE_SIZE, scene, div_factor, pars, draw)
 								positions[i*3] = items[i][0]/radius;
 								positions[i*3+1] = items[i][1]/radius;
 								positions[i*3+2] = items[i][2]/radius;
-
-								color.setHSL( 0.01 + 0.1 * ( i / num_verts ), 1.0, 0.5 );
+								if (Math.pow(-6352390-items[i][0],2)+Math.pow(-447879-items[i][1],2)+(Math.pow(197714-items[i][2],2))<Math.pow(5524190.98744,2)){
+									color.setHSL( 0.01 + 0.1 * ( i / num_verts ), 1.0, 0.5 );
+									count += 1;
+								}
+								else{
+									color.setHSL( 0.5, 1.0, 0.5 );
+								}
 	 							color.toArray( colors, i * 3 );
 
 								// console.log(( i / num_verts ), i, num_verts);
@@ -107,6 +115,7 @@ function draw_points(data, radius, PARTICLE_SIZE, scene, div_factor, pars, draw)
 								sizes[ i ] = PARTICLE_SIZE * 0.5;
 
 						}
+						console.log("selectedCount", count)
 
 						var geometry = new THREE.BufferGeometry();
 						geometry.setAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
