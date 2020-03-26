@@ -22,9 +22,20 @@ function draw_tracess(data, pars){
 		color: 0xffff00,
 		linewidth: 100
 	});
+
+	let pointer_lines = new Float32Array( num_segs * 6 );
 	for (let i=0; i<num_segs; i++){
+
+		pointer_lines[i*6]   = 0;
+		pointer_lines[i*6+1] = 0;
+		pointer_lines[i*6+2] = 0;
+		pointer_lines[i*6+3] = items[i][0]/pars.radius;
+		pointer_lines[i*6+4] = items[i][1]/pars.radius;
+		pointer_lines[i*6+5] = items[i][2]/pars.radius;
+
+
 		let points = [];
-		points.push( new THREE.Vector3( 0/pars.radius, 0/pars.radius, 0/pars.radius ) );
+		// points.push( new THREE.Vector3( 0/pars.radius, 0/pars.radius, 0/pars.radius ) );
 		for (let j=0; j<items[i].length; j+=3){
 			points.push( new THREE.Vector3( items[i][j]/pars.radius, items[i][j+1]/pars.radius, items[i][j+2]/pars.radius ) );
 
@@ -34,6 +45,14 @@ function draw_tracess(data, pars){
 		var line = new THREE.Line( geometry, material );
 		pars.scene.add( line );
 
+		// drawing the pointer lines from center to starting position
+		var geometry_ptr = new THREE.BufferGeometry();
+		var material_ptr = new THREE.LineBasicMaterial( { color: 0xffff00 } );
+		geometry_ptr.setAttribute( 'position', new THREE.Float32BufferAttribute( pointer_lines, 3 ) );
+		geometry_ptr.computeBoundingSphere();
+		pars.pointer_lines = new THREE.LineSegments( geometry_ptr, material_ptr );
+		pars.scene.add( pars.pointer_lines );
+		pars.pointer_lines.visible = false;
 	}
 
 	
@@ -127,6 +146,13 @@ function draw_points(data, radius, PARTICLE_SIZE, scene, div_factor, pars, draw)
 
 						var color = new THREE.Color();
 						let count = 0;
+						let max_partid = 1;
+						for (let i=0; i<num_verts; i+=1){
+							let partid = parseInt(items[i][3]);
+							if (max_partid<partid)
+								max_partid = max_partid;
+						}
+						max_partid += 1;
 						
 						for (let i=0; i<num_verts; i+=1){
 
@@ -140,12 +166,13 @@ function draw_points(data, radius, PARTICLE_SIZE, scene, div_factor, pars, draw)
 								positions[i*3] = items[i][0]/radius;
 								positions[i*3+1] = items[i][1]/radius;
 								positions[i*3+2] = items[i][2]/radius;
+								let partid = items[i][3];
 								if (Math.pow(-6352390-items[i][0],2)+Math.pow(-447879-items[i][1],2)+(Math.pow(197714-items[i][2],2))<Math.pow(5524190.98744,2)){
-									color.setHSL( 0.01 + 0.1 * ( i / num_verts ), 1.0, 0.5 );
+									color.setHSL( 0.01 + 0.1 * ( partid/max_partid), 1.0, 0.5 );
 									count += 1;
 								}
 								else{
-									color.setHSL( 0.5, 1.0, 0.5 );
+									color.setHSL( 0.5, 0.1, 0.9 );
 								}
 	 							color.toArray( colors, i * 3 );
 
@@ -183,8 +210,8 @@ function draw_points(data, radius, PARTICLE_SIZE, scene, div_factor, pars, draw)
 
 						var geometry = new THREE.SphereGeometry( div_factor - 0.02*div_factor, 100, 100 );
 						var material = new THREE.MeshBasicMaterial( {color: 0x111111} );
-						var sphere = new THREE.Mesh( geometry, material );
-						// scene.add( sphere );
+						pars.sphere = new THREE.Mesh( geometry, material );
+						scene.add( pars.sphere );
 					}
 
 					return items;

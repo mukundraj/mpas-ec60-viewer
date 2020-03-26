@@ -106,6 +106,8 @@
 			var selectButtonPressed = 0;
 			let mouseDown = 0;
 			let showPointCenter = true;
+			let showTracePtr = false;
+			let showSphere = false;
 
 
 
@@ -203,6 +205,8 @@
 				}
 
 				pars.particles.visible = showPointCenter;
+				pars.sphere.visible = showSphere;
+				pars.pointer_lines.visible = showTracePtr;
 
 
 				// picker end
@@ -348,7 +352,10 @@
 
 			    if (charCode === 99){
 			    	showPointCenter = !showPointCenter;
-			    	console.log(showPointCenter)
+			    }else if(charCode === 98){
+			    	showSphere = !showSphere;
+			    }else if(charCode ===112){
+			    	showTracePtr = !showTracePtr;
 			    }
 			};
 
