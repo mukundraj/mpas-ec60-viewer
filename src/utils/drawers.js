@@ -1,3 +1,45 @@
+
+function draw_tracess(data, pars){
+
+
+	var items = data.split("\n").map(function(el){ return el.split(" ");});
+					items = items.filter(item => item.length > 1);
+
+					items = items.map(function(elem) {
+
+						// console.log(elem);
+						elem = elem.filter(e => e.localeCompare("")!=0);
+
+						return elem.map(function(elem2) {
+							return parseFloat(elem2);
+						});
+						
+					});
+
+	var num_segs = items.length;
+
+	var material = new THREE.LineBasicMaterial({
+		color: 0xffff00,
+		linewidth: 100
+	});
+	for (let i=0; i<num_segs; i++){
+		let points = [];
+		points.push( new THREE.Vector3( 0/pars.radius, 0/pars.radius, 0/pars.radius ) );
+		for (let j=0; j<items[i].length; j+=3){
+			points.push( new THREE.Vector3( items[i][j]/pars.radius, items[i][j+1]/pars.radius, items[i][j+2]/pars.radius ) );
+
+		}
+		console.log(points)
+		var geometry = new THREE.BufferGeometry().setFromPoints( points );
+		var line = new THREE.Line( geometry, material );
+		pars.scene.add( line );
+
+	}
+
+	
+
+}
+
 function draw_lines(data, pars, items_vert){
 
 			var items = data.split("\n").map(function(el){ return el.split(" ");});
@@ -74,7 +116,7 @@ function draw_points(data, radius, PARTICLE_SIZE, scene, div_factor, pars, draw)
 
 					pars.items = items;
 
-					if (draw===1){
+					if (draw===true){
 
 						let num_verts = items.length
 						console.log(num_verts)
@@ -142,7 +184,7 @@ function draw_points(data, radius, PARTICLE_SIZE, scene, div_factor, pars, draw)
 						var geometry = new THREE.SphereGeometry( div_factor - 0.02*div_factor, 100, 100 );
 						var material = new THREE.MeshBasicMaterial( {color: 0x111111} );
 						var sphere = new THREE.Mesh( geometry, material );
-						scene.add( sphere );
+						// scene.add( sphere );
 					}
 
 					return items;

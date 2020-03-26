@@ -105,6 +105,7 @@
 			var  INTERSECTED;
 			var selectButtonPressed = 0;
 			let mouseDown = 0;
+			let showPointCenter = true;
 
 
 
@@ -201,6 +202,8 @@
 					}
 				}
 
+				pars.particles.visible = showPointCenter;
+
 
 				// picker end
 
@@ -220,6 +223,7 @@
 			let ipfile_verts = '../../viewer_mpas_convertor/output/vertices.csv';
 			let ipfile_lines = '../../viewer_mpas_convertor/output/edgeids.csv';
 			let ipfile_centers = '../../viewer_mpas_convertor/output/centers.csv';
+			let ipfile_traces = '../../viewer_mpas_convertor/output/traces.csv'
 
 			function load_draw_all(radius, PARTICLE_SIZE, scene, div_factor, pars){
 			loader.load(ipfile_verts, function ( data_verts) {
@@ -230,9 +234,15 @@
 						draw_lines(data_lines, pars, items_verts);
 
 						loader.load(ipfile_centers, function ( data_centers) {
-							draw_points(data_centers, radius, PARTICLE_SIZE, scene, div_factor, pars, 1);
+							draw_points(data_centers, radius, PARTICLE_SIZE, scene, div_factor, pars, true);
 
-							animate();
+							loader.load(ipfile_traces, function (data_traces){
+
+								draw_tracess(data_traces, pars);
+							
+
+								animate();
+							});
 						});
 
 						
@@ -335,6 +345,11 @@
 			    	selectButtonPressed = 1;
 			    // var charStr = String.fromCharCode(charCode);
 			    // alert(charStr);
+
+			    if (charCode === 99){
+			    	showPointCenter = !showPointCenter;
+			    	console.log(showPointCenter)
+			    }
 			};
 
 			document.onkeyup = function(evt) {
