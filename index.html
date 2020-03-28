@@ -51,9 +51,9 @@
 		</div>
 		<script src="../js/three.js"></script>
 		<script src="src/utils/picking.js"></script>
-		<script src="src/utils/drawers.js"></script>
 		<script type='text/javascript' src=../js/three.js-master/examples/js/libs/dat.gui.min.js></script>
 		<script src="https://d3js.org/d3.v5.min.js"></script>
+		<script src="src/utils/drawers.js"></script>
 		<script type="x-shader/x-vertex" id="vertexshader">
 
 			attribute float size;
@@ -108,6 +108,7 @@
 			let showPointCenter = true;
 			let showTracePtr = false;
 			let showSphere = false;
+			let showVelocity = -1;
 
 
 
@@ -156,7 +157,7 @@
 
 			let div_factor = 200;
 			var pars = {particles:0, raycaster:0, mouse:0, radius:6371229./div_factor, 
-						div_factor:div_factor, scene: scene, PARTICLE_SIZE: PARTICLE_SIZE};
+						div_factor:div_factor, scene: scene, PARTICLE_SIZE: PARTICLE_SIZE, vel_level:null, vel_lines:null};
 			pars.raycaster = new THREE.Raycaster();
 			pars.mouse = new THREE.Vector2();
 
@@ -227,11 +228,15 @@
 			let ipfile_verts = '../../viewer_mpas_convertor/output/vertices.csv';
 			let ipfile_lines = '../../viewer_mpas_convertor/output/edgeids.csv';
 			let ipfile_centers = '../../viewer_mpas_convertor/output/centers.csv';
-			let ipfile_traces = '../../viewer_mpas_convertor/output/traces.csv'
+			let ipfile_traces = '../../viewer_mpas_convertor/output/traces.csv';
+			let ipfile_vertvel = '../../viewer_mpas_convertor/output/vertvel';
 
 			function load_draw_all(radius, PARTICLE_SIZE, scene, div_factor, pars){
 			loader.load(ipfile_verts, function ( data_verts) {
 					let items_verts = draw_points(data_verts, radius, PARTICLE_SIZE, scene, div_factor, pars, 0); // 0 param implies no render
+						let level = showVelocity;
+						pars.items_verts = items_verts;
+						read_draw_vertvels(ipfile_vertvel, level, items_verts, pars);
 
 					loader.load(ipfile_lines, function ( data_lines) {
 
@@ -356,6 +361,17 @@
 			    	showSphere = !showSphere;
 			    }else if(charCode ===112){
 			    	showTracePtr = !showTracePtr;
+			    }else if (charCode === 118){
+			    	if (showVelocity===-1)
+			    		showVelocity = 0;
+			    	else 
+			    		showVelocity = (showVelocity+6)%60;
+
+			    	read_draw_vertvels(ipfile_vertvel, showVelocity, pars.items_verts, pars);
+
+			    }else if (charCode === 86){
+			    	showVelocity = -1;
+			    	read_draw_vertvels(ipfile_vertvel, showVelocity, pars.items_verts, pars);
 			    }
 			};
 

@@ -1,3 +1,64 @@
+function read_draw_vertvels(ipfile_vertvel, level, items_vert, pars){
+
+
+	console.log(level.toString())
+	if (level<0){
+		if (pars.vel_lines !== null){
+				pars.scene.remove(pars.vel_lines);
+				pars.vel_level = level;
+		}
+		return;
+
+	}else{
+		let ipfile_verts = ipfile_vertvel.concat(level.toString().concat(".csv"));
+
+		let loader = new THREE.FileLoader();
+		loader.load(ipfile_verts, function ( data) {
+			var items = data.split("\n").map(function(el){ return el.split(" ");});
+						items = items.filter(item => item.length > 1);
+
+						items = items.map(function(elem) {
+
+							// console.log(elem);
+							elem = elem.filter(e => e.localeCompare("")!=0);
+
+							return elem.map(function(elem2) {
+								return parseFloat(elem2);
+							});
+							
+						});
+			let num_verts = items.length;
+			let vel_lines = new Float32Array( num_verts * 6 );
+			let alpha = 10;
+			for (let i=0; i< num_verts; i++){
+				vel_lines[i*6]   = items_vert[i][0]/pars.radius;
+				vel_lines[i*6+1] = items_vert[i][1]/pars.radius;
+				vel_lines[i*6+2] = items_vert[i][2]/pars.radius;
+				vel_lines[i*6+3] = alpha*items[i][0]+items_vert[i][0]/pars.radius;
+				vel_lines[i*6+4] = alpha*items[i][1]+items_vert[i][1]/pars.radius;
+				vel_lines[i*6+5] = alpha*items[i][2]+items_vert[i][2]/pars.radius;
+
+			}
+			// drawing the pointer lines from center to starting position
+			var geometry = new THREE.BufferGeometry();
+			var material = new THREE.LineBasicMaterial( { color: 0xff8800 } );
+			geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( vel_lines, 3 ) );
+			geometry.computeBoundingSphere();
+			if (pars.vel_lines !== null){
+				pars.scene.remove(pars.vel_lines);
+				pars.vel_level = level;
+			}
+			pars.vel_level = level;
+			pars.vel_lines = new THREE.LineSegments( geometry, material );
+			pars.scene.add( pars.vel_lines );
+
+	});
+
+}
+
+
+}
+
 
 function draw_tracess(data, pars){
 
@@ -40,7 +101,7 @@ function draw_tracess(data, pars){
 			points.push( new THREE.Vector3( items[i][j]/pars.radius, items[i][j+1]/pars.radius, items[i][j+2]/pars.radius ) );
 
 		}
-		console.log(points)
+		// console.log(points)
 		var geometry = new THREE.BufferGeometry().setFromPoints( points );
 		var line = new THREE.Line( geometry, material );
 		pars.scene.add( line );
